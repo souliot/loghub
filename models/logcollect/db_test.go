@@ -1,7 +1,6 @@
 package logcollect
 
 import (
-	"loghub/models/config"
 	"testing"
 )
 
@@ -11,5 +10,5 @@ var (
 )
 
 func TestInitLog(t *testing.T) {
-	InitLogDb(addr, config.WithDb("log_test"), config.WithTable("darwin_log"))
+	// InitLogDb(addr, config.WithDb("log_test"), config.WithTable("darwin_log"))
 }

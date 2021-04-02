@@ -56,9 +56,14 @@ type State struct {
 	Offset int64
 }
 
+type lineChan struct {
+	Name string
+	Line chan string
+}
+
 // GetSampledEntries wraps GetEntries and returns a list of channels that
 // provide sampled entries
-func GetSampledEntries(ctx context.Context, conf Config, sampleRate uint) ([]chan string, error) {
+func GetSampledEntries(ctx context.Context, conf Config, sampleRate uint) ([]*lineChan, error) {
 	unsampledLinesChans, err := GetEntries(ctx, conf)
 	if err != nil {
 		return nil, err
@@ -66,20 +71,21 @@ func GetSampledEntries(ctx context.Context, conf Config, sampleRate uint) ([]cha
 	if sampleRate == 1 {
 		return unsampledLinesChans, nil
 	}
-
-	sampledLinesChans := make([]chan string, 0, len(unsampledLinesChans))
-
+	sampledLinesChans := make([]*lineChan, 0, len(unsampledLinesChans))
 	for _, lines := range unsampledLinesChans {
-		sampledLines := make(chan string)
+		sampledLines := &lineChan{
+			Name: lines.Name,
+			Line: make(chan string),
+		}
 		go func(pLines chan string) {
-			defer close(sampledLines)
+			defer close(sampledLines.Line)
 			for line := range pLines {
 				if shouldDrop(sampleRate) {
 				} else {
-					sampledLines <- line
+					sampledLines.Line <- line
 				}
 			}
-		}(lines)
+		}(lines.Line)
 		sampledLinesChans = append(sampledLinesChans, sampledLines)
 	}
 	return sampledLinesChans, nil
@@ -95,7 +101,7 @@ func shouldDrop(rate uint) bool {
 
 // GetEntries sets up a list of channels that get one line at a time from each
 // file down each channel.
-func GetEntries(ctx context.Context, conf Config) ([]chan string, error) {
+func GetEntries(ctx context.Context, conf Config) ([]*lineChan, error) {
 	if conf.Type != RotateStyleSyslog {
 		return nil, errors.New("Only Syslog style rotation currently supported")
 	}
@@ -118,24 +124,37 @@ func GetEntries(ctx context.Context, conf Config) ([]chan string, error) {
 	}
 
 	// make our lines channel list; we'll get one channel for each file
-	linesChans := make([]chan string, 0, len(filenames))
+	linesChans := make([]*lineChan, 0, len(filenames))
 	numFiles := len(filenames)
 	for _, file := range filenames {
-		var lines chan string
+		var lines = &lineChan{
+			Name: getFileName(file),
+			Line: make(chan string),
+		}
 		if file == "-" {
-			lines = tailStdIn(ctx)
+			lines.Line = tailStdIn(ctx)
 		} else {
 			stateFile := getStateFile(conf, file, numFiles)
 			tailer, err := getTailer(conf, file, stateFile)
 			if err != nil {
 				return nil, err
 			}
-			lines = tailSingleFile(ctx, tailer, file, stateFile)
+			lines.Line = tailSingleFile(ctx, tailer, file, stateFile)
 		}
 		linesChans = append(linesChans, lines)
 	}
 
 	return linesChans, nil
+}
+
+func getFileName(file string) (name string) {
+	_, aname := filepath.Split(file)
+	fs := strings.Split(aname, ".")
+	if len(fs) > 0 {
+		name = fs[0]
+		return
+	}
+	return
 }
 
 // removeStateFiles goes through the list of files and removes any that appear

@@ -1,6 +1,8 @@
 package logcollect
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestRegex(t *testing.T) {
 	lr, err := ParseLineRegex(lineRegex[2])
@@ -28,4 +30,10 @@ func TestRegexSelf(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(parsed)
+}
+
+func TestFileName(t *testing.T) {
+	file := "business/logs/business.info.2010.log"
+
+	t.Log(getFileName(file))
 }

@@ -41,6 +41,7 @@ func (m *LogDb) Init(addr string, ops ...config.Op) {
 	cfg.Apply(ops)
 	cfg.Address = addr
 	cfg.ParseAddress()
+
 	defaultClickhouse.Cfg = cfg
 	dist_log_table = fmt.Sprintf("%s.%s", cfg.DbName, cfg.TableName)
 	insert_log_table = dist_log_table
@@ -56,6 +57,9 @@ func (m *LogDb) Init(addr string, ops ...config.Op) {
 		return
 	}
 	cm := cfg.ClickMode
+	if cm == config.ClickShardReplica {
+		cm = config.ClickShard
+	}
 	switch cm {
 	case config.ClickStandalone:
 		orm.RegisterModel(new(Log))

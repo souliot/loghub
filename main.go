@@ -68,6 +68,12 @@ func start() {
 			Value:   "",
 			Usage:   "Used Local IP to monitor `local_ip`",
 		}),
+		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{
+			Name:    "etcdendpoints",
+			Aliases: []string{"ep"},
+			Value:   cli.NewStringSlice("127.0.0.1:2379"),
+			Usage:   "Used Etcd Endpoints `etcdendpoints`",
+		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:    "gopoolsize",
 			Aliases: []string{"g"},
@@ -89,7 +95,7 @@ func start() {
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:    "dbaddr",
 			Aliases: []string{"a"},
-			Value:   "tcp://127.0.0.1:9008?username=default&password=watrix888",
+			Value:   "",
 			Usage:   "Used clickhouse `dbaddress`",
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{

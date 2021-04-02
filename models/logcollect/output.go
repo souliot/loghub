@@ -3,6 +3,7 @@ package logcollect
 import (
 	"public/libs_go/ormlib/orm"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	slog "github.com/souliot/siot-log"
@@ -10,7 +11,7 @@ import (
 
 var (
 	db_chs   chan bool
-	log_bulk = 5000
+	log_bulk int64 = 5000
 )
 
 type Output struct {
@@ -30,22 +31,25 @@ func NewOutput(d time.Duration, gr int) (o *Output) {
 func (m *Output) Run() {
 	db_chs = make(chan bool, m.gr)
 	o_logs := make([]*Log, 0)
-	cnt := 0
+	var cnt int64 = 0
+	go func() {
+		for {
+			select {
+			case <-m.ticker.C:
+				datas := make([]*Log, len(o_logs))
+				copy(datas, o_logs)
+				db_chs <- true
+				go insertLog(datas)
+				m.lock.Lock()
+				o_logs = make([]*Log, 0)
+				m.lock.Unlock()
+				atomic.StoreInt64(&cnt, 0)
+			}
+		}
+	}()
 	for log := range mlog {
 		o_logs = append(o_logs, log)
-		cnt++
-		select {
-		case <-m.ticker.C:
-			datas := make([]*Log, len(o_logs))
-			copy(datas, o_logs)
-			db_chs <- true
-			go insertLog(datas)
-			m.lock.Lock()
-			o_logs = make([]*Log, 0)
-			m.lock.Unlock()
-			cnt = 0
-		default:
-		}
+		atomic.AddInt64(&cnt, 1)
 		if cnt >= log_bulk {
 			datas := make([]*Log, len(o_logs))
 			copy(datas, o_logs)
@@ -54,7 +58,7 @@ func (m *Output) Run() {
 			m.lock.Lock()
 			o_logs = make([]*Log, 0)
 			m.lock.Unlock()
-			cnt = 0
+			atomic.StoreInt64(&cnt, 0)
 		}
 	}
 }

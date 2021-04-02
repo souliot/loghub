@@ -4,6 +4,7 @@ import (
 	"loghub/models/config"
 	"public/libs_go/ormlib/orm"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	slog "github.com/souliot/siot-log"
@@ -12,7 +13,7 @@ import (
 var (
 	db_chs       chan bool
 	nodeAddress  string
-	monitor_bulk = 5000
+	monitor_bulk int64 = 5000
 )
 
 type Output struct {
@@ -33,22 +34,26 @@ func (m *Output) Run() {
 	db_chs = make(chan bool, m.gr)
 	o_sys := make([]MonitorSystem, 0)
 	nodeAddress = config.LocalIP
-	cnt := 0
+	var cnt int64 = 0
+
+	go func() {
+		for {
+			select {
+			case <-m.ticker.C:
+				datas := make([]MonitorSystem, len(o_sys))
+				copy(datas, o_sys)
+				db_chs <- true
+				go insertSystemMonitor(datas)
+				m.lock.Lock()
+				o_sys = make([]MonitorSystem, 0)
+				m.lock.Unlock()
+				atomic.StoreInt64(&cnt, 0)
+			}
+		}
+	}()
 	for sys := range msys {
 		o_sys = append(o_sys, sys)
-		cnt++
-		select {
-		case <-m.ticker.C:
-			datas := make([]MonitorSystem, len(o_sys))
-			copy(datas, o_sys)
-			db_chs <- true
-			go insertSystemMonitor(datas)
-			m.lock.Lock()
-			o_sys = make([]MonitorSystem, 0)
-			m.lock.Unlock()
-			cnt = 0
-		default:
-		}
+		atomic.AddInt64(&cnt, 1)
 		if cnt >= monitor_bulk {
 			datas := make([]MonitorSystem, len(o_sys))
 			copy(datas, o_sys)
@@ -57,7 +62,7 @@ func (m *Output) Run() {
 			m.lock.Lock()
 			o_sys = make([]MonitorSystem, 0)
 			m.lock.Unlock()
-			cnt = 0
+			atomic.StoreInt64(&cnt, 0)
 		}
 	}
 }

@@ -62,6 +62,9 @@ func (m *MonitorDb) Init(addr string, ops ...config.Op) {
 		return
 	}
 	cm := cfg.ClickMode
+	if cm == config.ClickShardReplica {
+		cm = config.ClickShard
+	}
 	switch cm {
 	case config.ClickStandalone:
 		initSystemDbStandalone()

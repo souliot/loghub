@@ -2,6 +2,7 @@ package logcollect
 
 import (
 	"context"
+	"loghub/models/config"
 	"strings"
 	"time"
 
@@ -55,7 +56,7 @@ func NewInput(coll_path []string, gr int) (i *Input) {
 }
 
 func (m *Input) Run() {
-	var linesChans []chan string
+	var linesChans []*lineChan
 	var err error
 	to := TailOptions{
 		ReadFrom:  "last",
@@ -80,12 +81,13 @@ func (m *Input) Run() {
 	}
 	mlog_chs = make(chan bool, m.gr)
 	for _, lines := range linesChans {
+		name := lines.Name
 		go func(plinex chan string, rlp *RegexLineParser) {
 			for line := range plinex {
 				mlog_chs <- true
-				go m.parseLine(line, rlp)
+				go m.parseLine(name, line, rlp)
 			}
-		}(lines, rlp)
+		}(lines.Line, rlp)
 	}
 }
 
@@ -93,7 +95,7 @@ func (m *Input) Stop() {
 
 }
 
-func (m *Input) parseLine(line string, rlp *RegexLineParser) {
+func (m *Input) parseLine(name, line string, rlp *RegexLineParser) {
 	defer func() {
 		<-mlog_chs
 	}()
@@ -110,9 +112,13 @@ func (m *Input) parseLine(line string, rlp *RegexLineParser) {
 
 	if sm, ok := parsedLine["ServiceName"]; ok {
 		log.ServiceName = sm.(string)
+	} else {
+		log.ServiceName = name
 	}
 	if addr, ok := parsedLine["Address"]; ok {
 		log.Address = addr.(string)
+	} else {
+		log.Address = config.LocalIP
 	}
 	log.DateTime = datetime
 	log.Level = parsedLine["Level"].(string)
