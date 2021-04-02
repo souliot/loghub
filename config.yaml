@@ -1,0 +1,8 @@
+log_interval: 10
+dbaddr: 'tcp://192.168.2.36:9008?alt_hosts=192.168.2.37:9008,192.168.2.38:9008&username=default&password=watrix888&click_mode=1'
+log_db: log_test
+log_table: darwin
+
+monitor_db: monitor_test
+monitor_spec: '@every 5s'
+system_table: system

@@ -1,3 +1,3 @@
-# loghub
+loghub
 
-loghub code
+For log collect and system monitor
