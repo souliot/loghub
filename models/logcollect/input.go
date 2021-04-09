@@ -20,7 +20,11 @@ type Log struct {
 }
 
 func (m *Log) TableName() string {
-	return "darwin_local"
+	dbs := strings.Split(insert_log_table, ".")
+	if len(dbs) > 1 {
+		return dbs[1]
+	}
+	return logDb.TableName
 }
 
 var (
