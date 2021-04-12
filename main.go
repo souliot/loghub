@@ -30,7 +30,7 @@ func init() {
 	slog.SetLogFuncCallDepth(3)
 	slog.SetLevel(slog.LevelInfo)
 	slog.Async()
-	slog.WithPrefix("0")
+	slog.WithPrefix("loghub")
 	slog.WithPrefix(config.GetIPStr())
 	filepath := strings.TrimRight(logpath, "/") + "/loghub.log"
 	slog.SetLogger("file", `{"filename":"`+filepath+`","daily":true,"maxdays":10,"color":false}`)
@@ -50,6 +50,7 @@ func main() {
 }
 
 func start() {
+	slog.Info("服务版本号：", version)
 	app := cli.NewApp()
 	app.Name = appName
 	app.Usage = describe

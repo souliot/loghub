@@ -39,8 +39,13 @@ func (c *LogHub) Run(ctx *cli.Context) {
 }
 
 func (c *LogHub) Stop() {
-	lc.Stop()
-	mt.Stop()
+	if lc != nil {
+		lc.Stop()
+	}
+
+	if mt != nil {
+		mt.Stop()
+	}
 }
 
 func (c *LogHub) InitBase(ctx *cli.Context) {
