@@ -20,7 +20,7 @@ import (
 var (
 	appName  = "loghub"
 	describe = "a loghub for format log file"
-	version  = "5.1.0.0"
+	version  = "5.1.2.0"
 	logpath  = "logs"
 )
 
@@ -40,13 +40,13 @@ func init() {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	start()
-	chSig := make(chan os.Signal)
-	signal.Notify(chSig, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
-	_ = <-chSig
 	defer func() {
 		stop()
 		time.Sleep(200 * time.Millisecond)
 	}()
+	chSig := make(chan os.Signal)
+	signal.Notify(chSig, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
+	_ = <-chSig
 }
 
 func start() {
