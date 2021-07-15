@@ -20,7 +20,7 @@ import (
 var (
 	appName  = "loghub"
 	describe = "a loghub for format log file"
-	version  = "5.1.2.0"
+	version  = "5.1.1.0"
 	logpath  = "logs"
 )
 
