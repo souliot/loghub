@@ -96,6 +96,7 @@ func loadConf() (ps []string) {
 			p := path.Join("..", path.Dir(v), "logs")
 			ps = append(ps, p)
 		}
+		return
 	}
 	if err := config.LoadConfig("../daemon/config.conf"); err == nil {
 		apps := config.GetValueSliceString("applications")
