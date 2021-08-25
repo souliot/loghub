@@ -67,13 +67,19 @@ func start() {
 			Name:    "local_ip",
 			Aliases: []string{"ip"},
 			Value:   "",
-			Usage:   "Used Local IP to monitor `local_ip`",
+			Usage:   "Used Local IP to log `local_ip`",
 		}),
 		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{
 			Name:    "etcdendpoints",
 			Aliases: []string{"ep"},
 			Value:   cli.NewStringSlice("127.0.0.1:2379"),
 			Usage:   "Used Etcd Endpoints `etcdendpoints`",
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:    "port",
+			Aliases: []string{"p"},
+			Value:   8890,
+			Usage:   "Prometheus metrics port for program `port`",
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:    "gopoolsize",
@@ -110,24 +116,6 @@ func start() {
 			Aliases: []string{"ltb"},
 			Value:   "darwin_log",
 			Usage:   "Used clickhouse `log_table`",
-		}),
-		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:    "monitor_db",
-			Aliases: []string{"mdb"},
-			Value:   "monitor",
-			Usage:   "Used clickhouse `monitor_db`",
-		}),
-		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:    "monitor_spec",
-			Aliases: []string{"ms"},
-			Value:   "@every 5s",
-			Usage:   "Used monitor spec `monitor_spec`",
-		}),
-		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:    "system_table",
-			Aliases: []string{"systb"},
-			Value:   "system",
-			Usage:   "Used clickhouse `system_table`",
 		}),
 		&cli.StringFlag{
 			Name:    "config",

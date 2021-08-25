@@ -4,7 +4,6 @@ import (
 	"loghub/models"
 	"loghub/models/config"
 	"loghub/models/logcollect"
-	"loghub/models/monitor"
 	"path"
 	"public/libs_go/syslib"
 	"time"
@@ -17,7 +16,6 @@ var (
 	LogHubController = new(LogHub)
 	defaultClickAddr = "tcp://127.0.0.1:9008?username=default&password=watrix888"
 	lc               *logcollect.LogCollect
-	mt               *monitor.SMonitor
 )
 
 type LogHub struct{}
@@ -29,22 +27,15 @@ func (c *LogHub) Run(ctx *cli.Context) {
 	log_paths = append(log_paths, ps...)
 	slog.Info("日志采集目录：", log_paths)
 	log_interval := ctx.Int64("log_interval")
-	monitor_spec := ctx.String("monitor_spec")
 	lc = logcollect.NewLogCollect(log_paths, time.Duration(log_interval)*time.Second, models.GoPoolSize)
 	lc.Start()
 
-	mt = monitor.NewMonitor(monitor_spec, time.Duration(log_interval)*time.Second, models.GoPoolSize)
-	mt.Start()
 	slog.Info("服务启动成功！")
 }
 
 func (c *LogHub) Stop() {
 	if lc != nil {
 		lc.Stop()
-	}
-
-	if mt != nil {
-		mt.Stop()
 	}
 }
 
@@ -80,11 +71,6 @@ func (c *LogHub) InitBase(ctx *cli.Context) {
 	ldb := logcollect.NewLogDb()
 	ldb.Init(addr, config.WithDb(log_db), config.WithTable(log_table))
 
-	// monitor
-	db := ctx.String("monitor_db")
-	sys := ctx.String("system_table")
-	mdb := monitor.NewMonitorDb(db, sys)
-	mdb.Init(addr)
 }
 
 func loadConf() (ps []string) {
