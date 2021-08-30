@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"public/libs_go/syslib"
+	"strings"
 	"time"
 
 	"github.com/souliot/gateway/master"
@@ -33,7 +34,7 @@ func NewServer(ops ...config.Option) (m *Server, err error) {
 	logs.Info("服务版本号：", cfg.Version)
 
 	// log collector
-	ps := loadConf()
+	ps := loadConf(cfg.AppName)
 	cfg.Collector.Paths = append(cfg.Collector.Paths, ps...)
 	lc := logcollect.NewLogCollect(cfg.Collector.Paths, time.Duration(cfg.Collector.Interval)*time.Second, cfg.GoPoolSize, cfg.LocalIP)
 
@@ -115,23 +116,34 @@ func (s *Server) Stop() {
 	logs.Info("服务关闭成功！")
 }
 
-func loadConf() (ps []string) {
+func loadConf(cur string) (ps []string) {
+	logs.Info("加载config.conf配置文件")
 	ps = make([]string, 0)
+	ps_cache := make(map[string]bool)
 	config := new(syslib.Config)
 	if err := config.LoadConfig("../config.conf"); err == nil {
 		apps := config.GetValueSliceString("applications")
 		for _, v := range apps {
+			if strings.Contains(v, cur) {
+				continue
+			}
 			p := path.Join("..", path.Dir(v), "logs")
-			ps = append(ps, p)
+			ps_cache[p] = true
 		}
-		return
 	}
 	if err := config.LoadConfig("../daemon/config.conf"); err == nil {
 		apps := config.GetValueSliceString("applications")
 		for _, v := range apps {
+			if strings.Contains(v, cur) {
+				continue
+			}
 			p := path.Join(path.Dir(v), "logs")
-			ps = append(ps, p)
+			ps_cache[p] = true
 		}
+	}
+
+	for k, _ := range ps_cache {
+		ps = append(ps, k)
 	}
 	return
 }
