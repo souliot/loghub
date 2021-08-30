@@ -58,8 +58,8 @@ func NewServer(ops ...config.Option) (m *Server, err error) {
 		Typ:            cfg.AppName,
 		Address:        addr,
 		Version:        cfg.Version,
-		MetricsType:    master.MetricsTypeNode,
-		MetricsAddress: fmt.Sprintf("%s/metrics", addr),
+		MetricsType:    master.MetricsTypeSystem,
+		MetricsAddress: fmt.Sprintf("%s", addr),
 	}
 	ser, err := srv.NewRegService(cfg.EtcdEndpoints, meta)
 	if err != nil {
