@@ -2,26 +2,26 @@ package logcollect
 
 import (
 	"fmt"
-	"loghub/models/config"
 	"net/url"
-	"public/libs_go/ormlib/orm"
 	"strings"
 
-	slog "github.com/souliot/siot-log"
+	"github.com/souliot/siot-orm/orm"
+
+	logs "github.com/souliot/siot-log"
 )
 
 var (
 	clickdb           = "default"
-	defaultClickhouse = new(config.DbClickhouse)
+	defaultClickhouse = new(DbClickhouse)
 	DefaultUsername   = "default"
 	insert_log_table  = "log.darwin_log"
 	dist_log_table    = "log.darwin_log"
-	logDb             = &LogDb{
+	DefaultLogDb      = &LogDb{
 		DbName:    "log",
 		TableName: "darwin_log",
 	}
-	defaultClickSetting = &config.ClickSetting{
-		ClickMode: config.ClickStandalone,
+	defaultClickSetting = &ClickSetting{
+		ClickMode: ClickStandalone,
 		DbName:    "log",
 		TableName: "darwin_log",
 	}
@@ -32,11 +32,7 @@ type LogDb struct {
 	TableName string
 }
 
-func NewLogDb() (m *LogDb) {
-	return logDb
-}
-
-func (m *LogDb) Init(addr string, ops ...config.Op) {
+func (m *LogDb) Init(addr string, ops ...Op) {
 	cfg := defaultClickSetting
 	cfg.Apply(ops)
 	cfg.Address = addr
@@ -53,18 +49,18 @@ func (m *LogDb) Init(addr string, ops ...config.Op) {
 	orm.RegisterDriver("clickhouse", orm.DRClickHouse)
 	err := orm.RegisterDataBase(clickdb, "clickhouse", addr+"&read_timeout=10&write_timeout=20", true)
 	if err != nil {
-		slog.Error("初始化Clickhouse错误：", err)
+		logs.Error("初始化Clickhouse错误：", err)
 		return
 	}
 	cm := cfg.ClickMode
-	if cm == config.ClickShardReplica {
-		cm = config.ClickShard
+	if cm == ClickShardReplica {
+		cm = ClickShard
 	}
 	switch cm {
-	case config.ClickStandalone:
+	case ClickStandalone:
 		orm.RegisterModel(new(Log))
 		initDBStandalone()
-	case config.ClickShard:
+	case ClickShard:
 		insert_log_table = fmt.Sprintf("%s_local", dist_log_table)
 		orm.RegisterModel(new(Log))
 		url, err := url.Parse(cfg.Address)
@@ -89,7 +85,7 @@ func (m *LogDb) Init(addr string, ops ...config.Op) {
 			orm.RegisterDataBase("database", "clickhouse", "tcp://"+v+"?username="+username+"&password="+password+"&read_timeout=10&write_timeout=20", true)
 			initDBCluster()
 		}
-	case config.ClickShardReplica:
+	case ClickShardReplica:
 		insert_log_table = fmt.Sprintf("%s_local", dist_log_table)
 		orm.RegisterModel(new(Log))
 		initDBClusterReplica()
@@ -99,7 +95,7 @@ func (m *LogDb) Init(addr string, ops ...config.Op) {
 	if len(dbs) > 1 {
 		err = orm.RegisterDataBase(clickdb, "clickhouse", addr+"&read_timeout=10&write_timeout=20&database="+dbs[0], true)
 		if err != nil {
-			slog.Error("初始化Clickhouse错误：", err)
+			logs.Error("初始化Clickhouse错误：", err)
 			return
 		}
 	}
@@ -110,7 +106,7 @@ func initDBStandalone() {
 	o.Using(clickdb)
 	_, err := o.Raw(`CREATE DATABASE IF NOT EXISTS ` + defaultClickSetting.DbName).Exec()
 	if err != nil {
-		slog.Error("create db <"+defaultClickSetting.DbName+"> error:", err)
+		logs.Error("create db <"+defaultClickSetting.DbName+"> error:", err)
 	}
 
 	_, err = o.Raw(`
@@ -127,10 +123,9 @@ func initDBStandalone() {
 		(DateTime) SETTINGS index_granularity = 8192
 	`).Exec()
 	if err != nil {
-		slog.Error("create table <"+dist_log_table+"> error:", err)
+		logs.Error("create table <"+dist_log_table+"> error:", err)
 		return
 	}
-	slog.Info("初始化数据库：", defaultClickSetting.DbName)
 }
 
 func initDBCluster() {
@@ -138,7 +133,7 @@ func initDBCluster() {
 	o.Using("database")
 	_, err := o.Raw(`CREATE DATABASE IF NOT EXISTS ` + defaultClickSetting.DbName).Exec()
 	if err != nil {
-		slog.Error("create db <"+defaultClickSetting.DbName+"> error:", err)
+		logs.Error("create db <"+defaultClickSetting.DbName+"> error:", err)
 		return
 	}
 
@@ -156,7 +151,7 @@ func initDBCluster() {
 		(DateTime) SETTINGS index_granularity = 8192
 	`).Exec()
 	if err != nil {
-		slog.Error("create table <"+insert_log_table+"> error:", err)
+		logs.Error("create table <"+insert_log_table+"> error:", err)
 		return
 	}
 
@@ -165,10 +160,9 @@ func initDBCluster() {
 	ENGINE = Distributed(cluster, ` + defaultClickSetting.DbName + `, ` + fmt.Sprintf("%s_local", defaultClickSetting.TableName) + `, rand())
 	`).Exec()
 	if err != nil {
-		slog.Error("create table <"+dist_log_table+"> error:", err)
+		logs.Error("create table <"+dist_log_table+"> error:", err)
 		return
 	}
-	slog.Info("初始化数据库：", defaultClickSetting.DbName)
 }
 
 func initDBClusterReplica() {
@@ -176,7 +170,7 @@ func initDBClusterReplica() {
 	o.Using(clickdb)
 	_, err := o.Raw(`CREATE DATABASE IF NOT EXISTS ` + defaultClickSetting.DbName + ` ON CLUSTER cluster`).Exec()
 	if err != nil {
-		slog.Error("create db <"+defaultClickSetting.DbName+"> error:", err)
+		logs.Error("create db <"+defaultClickSetting.DbName+"> error:", err)
 		return
 	}
 
@@ -195,7 +189,7 @@ func initDBClusterReplica() {
 		(DateTime) SETTINGS index_granularity = 8192
 	`).Exec()
 	if err != nil {
-		slog.Error("create table <"+insert_log_table+"> error:", err)
+		logs.Error("create table <"+insert_log_table+"> error:", err)
 		return
 	}
 
@@ -204,8 +198,7 @@ func initDBClusterReplica() {
   ENGINE = Distributed(cluster, ` + defaultClickSetting.DbName + `, ` + fmt.Sprintf("%s_local", defaultClickSetting.TableName) + `, rand())
 	`).Exec()
 	if err != nil {
-		slog.Error("create table <"+dist_log_table+"> error:", err)
+		logs.Error("create table <"+dist_log_table+"> error:", err)
 		return
 	}
-	slog.Info("初始化数据库：", defaultClickSetting.DbName)
 }

@@ -1,10 +1,8 @@
-log_interval: 10
+collector:
+  dbname: log_test
+  interval: 10
+  tablename: darwin_log
 etcdendpoints:
   - 192.168.0.4:2379
-# local_ip: 192.168.0.4
-# dbaddr: 'tcp://192.168.2.36:9008?alt_hosts=192.168.2.37:9008,192.168.2.38:9008&username=default&password=watrix888&click_mode=1'
-log_db: log_test
-log_table: darwin_log
-# monitor_db: monitor_test
-# monitor_spec: '@every 5s'
-# system_table: system
+# httpport: 8090
+id: 65a10806bc38c52ebdfdacca03dbd18c
