@@ -3,6 +3,5 @@ collector:
   interval: 10
   tablename: darwin_log
 etcdendpoints:
-  - 192.168.0.4:2379
-# httpport: 8090
-id: 65a10806bc38c52ebdfdacca03dbd18c
+- 192.168.0.4:2379
+id: 61d7ee46af7dca57d86935106da3268d
