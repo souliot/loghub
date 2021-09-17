@@ -1,12 +1,13 @@
 package logcollect
 
 import (
-	"public/libs_go/ormlib/orm"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	slog "github.com/souliot/siot-log"
+	"public/libs_go/ormlib/orm"
+
+	"public/libs_go/logs"
 )
 
 var (
@@ -80,7 +81,7 @@ func insertLog(datas []*Log) (cnt int64, err error) {
 	o.Using(clickdb)
 	count, err := o.InsertMulti(5000, datas)
 	if err != nil {
-		slog.Error("写入clickhouse日志错误：", err)
+		logs.Error("写入clickhouse日志错误：", err)
 		return
 	}
 	cnt = count.(int64)

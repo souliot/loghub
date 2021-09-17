@@ -1,4 +1,4 @@
-package config
+package logcollect
 
 import (
 	"net/url"

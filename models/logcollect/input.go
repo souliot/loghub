@@ -2,11 +2,10 @@ package logcollect
 
 import (
 	"context"
-	"loghub/models/config"
 	"strings"
 	"time"
 
-	slog "github.com/souliot/siot-log"
+	"public/libs_go/logs"
 )
 
 type Log struct {
@@ -24,7 +23,7 @@ func (m *Log) TableName() string {
 	if len(dbs) > 1 {
 		return dbs[1]
 	}
-	return logDb.TableName
+	return DefaultLogDb.TableName
 }
 
 var (
@@ -70,17 +69,17 @@ func (m *Input) Run() {
 	}
 	tc := Config{
 		Paths:   m.paths,
-		Type:    RotateStyleSyslog,
+		Type:    RotateStyleSylogs,
 		Options: to,
 	}
 	linesChans, err = GetEntries(todo, tc)
 	if err != nil {
-		slog.Error("Error occurred while trying to tail logfile")
+		logs.Error("Error occurred while trying to tail logfile")
 		return
 	}
 	rlp, err := NewRegexLineParser(m.lineRegex)
 	if err != nil {
-		slog.Error("Error occurred while get regex")
+		logs.Error("Error occurred while get regex")
 		return
 	}
 	mlog_chs = make(chan bool, m.gr)
@@ -110,7 +109,7 @@ func (m *Input) parseLine(name, line string, rlp *RegexLineParser) {
 	log := &Log{}
 	datetime, err := time.ParseInLocation("2006/01/02 15:04:05", parsedLine["DateTime"].(string), time.Local)
 	if err != nil {
-		slog.Error("时间转换错误：", err)
+		logs.Error("时间转换错误：", err)
 		return
 	}
 
@@ -122,7 +121,7 @@ func (m *Input) parseLine(name, line string, rlp *RegexLineParser) {
 	if addr, ok := parsedLine["Address"]; ok {
 		log.Address = addr.(string)
 	} else {
-		log.Address = config.LocalIP
+		log.Address = LocalIP
 	}
 	log.DateTime = datetime
 	log.Level = parsedLine["Level"].(string)

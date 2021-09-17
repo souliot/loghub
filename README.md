@@ -1,3 +1,3 @@
 loghub
 
-For log collect and system monitor
+For log collect and system metrics

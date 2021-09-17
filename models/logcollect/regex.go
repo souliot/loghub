@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	slog "github.com/souliot/siot-log"
+	"public/libs_go/logs"
 )
 
 // Compile multiple log line regexes
@@ -31,7 +31,7 @@ func ParseLineRegex(regexStr string) (*regexp.Regexp, error) {
 	// Compile regex
 	lineRegex, err := regexp.Compile(regexStr)
 	if err != nil {
-		slog.Error("Could not compile line regex")
+		logs.Error("Could not compile line regex")
 		return nil, err
 	}
 
@@ -43,7 +43,7 @@ func ParseLineRegex(regexStr string) (*regexp.Regexp, error) {
 		}
 	}
 	if numNamedGroups == 0 {
-		slog.Error("No named capture groups")
+		logs.Error("No named capture groups")
 		return nil, errors.New(fmt.Sprintf("No named capture groups found in regex: '%s'. Must provide at least one named group with line regex. Example: `(?P<name>re)`", regexStr))
 	}
 

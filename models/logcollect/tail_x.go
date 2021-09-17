@@ -1,3 +1,4 @@
+//go:build linux || darwin || freebsd || netbsd || openbsd || solaris || dragonfly
 // +build linux darwin freebsd netbsd openbsd solaris dragonfly
 
 package logcollect
@@ -15,7 +16,7 @@ import (
 	"time"
 
 	"github.com/hpcloud/tail"
-	slog "github.com/souliot/siot-log"
+	"public/libs_go/logs"
 	"golang.org/x/sys/unix"
 )
 
@@ -23,7 +24,7 @@ type RotateStyle int
 
 const (
 	// foo.log gets rotated to foo.log.1, new entries go to foo.log
-	RotateStyleSyslog RotateStyle = iota
+	RotateStyleSylogs RotateStyle = iota
 	// foo.log.OLDSTAMP gets closed, new entries go to foo.log.NEWSTAMP
 	// NOT YET IMPLEMENTED
 	RotateStyleTimestamp
@@ -103,8 +104,8 @@ func shouldDrop(rate uint) bool {
 // GetEntries sets up a list of channels that get one line at a time from each
 // file down each channel.
 func GetEntries(ctx context.Context, conf Config) ([]*lineChan, error) {
-	if conf.Type != RotateStyleSyslog {
-		return nil, errors.New("Only Syslog style rotation currently supported")
+	if conf.Type != RotateStyleSylogs {
+		return nil, errors.New("Only Sylogs style rotation currently supported")
 	}
 	// expand any globs in the list of files so our list all represents real files
 	var filenames []string
@@ -165,11 +166,11 @@ func removeStateFiles(files []string, conf Config) []string {
 	newFiles := []string{}
 	for _, file := range files {
 		if file == conf.Options.StateFile {
-			// slog.Debug("skipping tailing file because it is named the same as the statefile flag")
+			// logs.Debug("skipping tailing file because it is named the same as the statefile flag")
 			continue
 		}
 		if strings.HasSuffix(file, ".leash.state") {
-			// slog.Debug("skipping tailing file because the filename ends with .leash.state")
+			// logs.Debug("skipping tailing file because the filename ends with .leash.state")
 			continue
 		}
 		// great! it's not a state file. let's use it.
@@ -186,7 +187,7 @@ func tailSingleFile(ctx context.Context, tailer *tail.Tail, file string, stateFi
 
 	stateFh, err := os.OpenFile(stateFile, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		slog.Warn("Failed to open statefile for writing. File location will not be saved.")
+		logs.Warn("Failed to open statefile for writing. File location will not be saved.")
 	}
 
 	ticker := time.NewTicker(time.Second)
@@ -240,7 +241,7 @@ func tailStdIn(ctx context.Context) chan string {
 			}
 			line, partialLine, err := input.ReadLine()
 			if err != nil {
-				// slog.Debug("stdin is closed")
+				// logs.Debug("stdin is closed")
 				// bail when STDIN closes
 				return
 			}
@@ -263,7 +264,7 @@ func getStartLocation(stateFile string, logfile string) *tail.SeekInfo {
 	end := &tail.SeekInfo{0, 2}
 	fh, err := os.Open(stateFile)
 	if err != nil {
-		// slog.Debug("getStartLocation failed to open the statefile")
+		// logs.Debug("getStartLocation failed to open the statefile")
 		return end
 	}
 	defer fh.Close()
@@ -271,29 +272,29 @@ func getStartLocation(stateFile string, logfile string) *tail.SeekInfo {
 	content := make([]byte, 1024)
 	bytesRead, err := fh.Read(content)
 	if err != nil {
-		// slog.Debug("getStartLocation failed to read the statefile contents")
+		// logs.Debug("getStartLocation failed to read the statefile contents")
 		return end
 	}
 	content = content[:bytesRead]
 	// decode the contents of the statefile
 	state := State{}
 	if err := json.Unmarshal(content, &state); err != nil {
-		// slog.Debug("getStartLocation failed to json decode the statefile")
+		// logs.Debug("getStartLocation failed to json decode the statefile")
 		return end
 	}
 	// get the details of the existing log file
 	logStat := unix.Stat_t{}
 	if err := unix.Stat(logfile, &logStat); err != nil {
-		// slog.Debug("getStartLocation failed to get unix.stat() on the logfile")
+		// logs.Debug("getStartLocation failed to get unix.stat() on the logfile")
 		return end
 	}
 	// compare inode numbers of the last-seen and existing log files
 	if state.INode != logStat.Ino {
-		// slog.Debug("getStartLocation found a different inode number for the logfile")
+		// logs.Debug("getStartLocation found a different inode number for the logfile")
 		// file's been rotated
 		return beginning
 	}
-	// slog.Debug("getStartLocation seeking to offset in logfile")
+	// logs.Debug("getStartLocation seeking to offset in logfile")
 	// we're good; start reading from the remembered state
 	return &tail.SeekInfo{
 		Offset: state.Offset,
@@ -334,7 +335,7 @@ func getTailer(conf Config, file string, stateFile string) (*tail.Tail, error) {
 		Logger:    tail.DiscardingLogger,
 		Poll:      conf.Options.Poll, // use poll instead of inotify
 	}
-	// slog.Debug("about to call tail.TailFile")
+	// logs.Debug("about to call tail.TailFile")
 	return tail.TailFile(file, tailConf)
 }
 
@@ -365,7 +366,7 @@ func getStateFile(conf Config, filename string, numFiles int) string {
 			// If the --tail.statefile is a directory, write statefile inside the specified directory
 			confStateFile = conf.Options.StateFile
 		} else {
-			// slog.Debug("Couldn't write to --tail.statefile=%s, writing honeytail state for %s to $TMPDIR (%s) instead.",
+			// logs.Debug("Couldn't write to --tail.statefile=%s, writing honeytail state for %s to $TMPDIR (%s) instead.",
 			// conf.Options.StateFile, filename, confStateFile)
 		}
 	}
