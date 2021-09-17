@@ -40,9 +40,6 @@ func NewService(ops ...config.Option) (m *Service) {
 	cfg := config.DefaultServerCfg
 	cfg.Apply(ops)
 	cfg.AppName = appName
-	config.InitLog(cfg)
-	logs.Info("初始化服务配置...")
-	logs.Info("服务版本号：", version)
 
 	// log collector
 	ps := loadConf(cfg.AppName)
@@ -156,6 +153,7 @@ func (s *Service) OnController(data *master.ControllerValue) {
 }
 
 func (s *Service) Start(c *conf.Setting) (port int, err error) {
+	logs.Info("服务版本号：", version)
 	s.ldb.Init(s.clickaddr, logcollect.WithDb(s.cfg.Collector.DBName), logcollect.WithTable(s.cfg.Collector.TableName))
 	logs.Info("初始化数据库配置，Clickhouse地址：", s.clickaddr)
 	// 启动日志采集
