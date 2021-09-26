@@ -183,7 +183,7 @@ func NewConfig(ser *Service) *conf.Config {
 	return &conf.Config{
 		EtcdEndpoints: ser.cfg.EtcdEndpoints,
 		ServiceType:   serviceType,
-		MetricsType:   master.MetricsTypeNone,
+		MetricsType:   "system",
 		Version:       version,
 	}
 }
