@@ -7,8 +7,10 @@ replace public => ../public
 require (
 	github.com/ClickHouse/clickhouse-go v1.4.5
 	github.com/gin-gonic/gin v1.7.4
+	github.com/gorilla/websocket v1.4.2
 	github.com/hpcloud/tail v1.0.0
 	github.com/prometheus/client_golang v1.11.0
+	github.com/souliot/siot-util v1.0.1
 	github.com/spf13/viper v1.8.1
 	golang.org/x/sys v0.0.0-20210816074244-15123e1e1f71
 	public v1.0.0
@@ -17,11 +19,13 @@ require (
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/daviddengcn/go-colortext v1.0.0 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.5 // indirect
@@ -50,6 +54,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
 	github.com/shirou/gopsutil/v3 v3.21.8 // indirect
+	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

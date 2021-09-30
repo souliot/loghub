@@ -3,7 +3,7 @@ package srv
 import (
 	"loghub/config"
 	"loghub/models/logcollect"
-	"loghub/models/metrics"
+	"loghub/models/server"
 	"os"
 	"path"
 	e "public/entities"
@@ -30,7 +30,7 @@ var (
 type Service struct {
 	cfg       *config.ServerCfg
 	lc        *logcollect.LogCollect
-	ms        *metrics.MetricsServer
+	ms        *server.ApiServer
 	ldb       *logcollect.LogDb
 	clickaddr string
 }
@@ -47,7 +47,7 @@ func NewService(ops ...config.Option) (m *Service) {
 	lc := logcollect.NewLogCollect(cfg.Collector.Paths, time.Duration(cfg.Collector.Interval)*time.Second, cfg.GoPoolSize, cfg.LocalIP)
 
 	// service metrics
-	ms := metrics.NewMetricsServer(cfg.HttpPort)
+	ms := server.NewApiServer(cfg.HttpPort)
 
 	// service register
 	id := cfg.Id

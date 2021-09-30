@@ -2,10 +2,11 @@ package logcollect
 
 import (
 	"context"
+	"loghub/models/ws"
+	"loghub/utils"
+	"public/libs_go/logs"
 	"strings"
 	"time"
-
-	"public/libs_go/logs"
 )
 
 type Log struct {
@@ -127,5 +128,12 @@ func (m *Input) parseLine(name, line string, rlp *RegexLineParser) {
 	log.Level = parsedLine["Level"].(string)
 	log.FuncCall = parsedLine["FuncCall"].(string)
 	log.Message = parsedLine["Message"].(string)
+	go func(log *Log) {
+		key := utils.StringJion(log.ServiceName, "_", log.Address)
+		ws.Ws.SendMessageToKEY(key, ws.Message{
+			DataType: ws.WsLog,
+			Data:     line,
+		})
+	}(log)
 	mlog <- log
 }
